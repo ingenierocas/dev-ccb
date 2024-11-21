@@ -1,0 +1,11 @@
+Información técnica del proyecto
+- archivo app.py: es el archivo maestro donde se procesa todos los asistentes (chatbots)
+- carpeta sql: Es la estructura inicial de la base de datos del proyecto en formato SQL
+- carpeta static: Se guarda el último audio de respuesta en el asistente de audio
+- carpeta uploads: Se guarda los audios que suben los usuario en el asistente de audio
+- carpeta templates: Se guarda las paginas de los asistentes y la página inicial
+	- index.html: Es la página de inicio
+	- asistente.html: Es la página del asistente para programadores
+	- audio.html: Es la página del asistente de audio
+	- estatico.html: Es la página del asistente estático
+	- dinamico: Es la página del asistente dinámico 

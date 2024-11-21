@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es"> 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Estático</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css"> <!-- Asegúrate de usar el archivo CSS compartido -->
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background-color: #0d6efd;
+            color: white;
+            padding: 15px 0;
+        }
+        header h1 {
+            margin: 0;
+        }
+        footer {
+            background-color: #0d6efd;
+            color: black;
+            text-align: center;
+            padding: 10px 0;
+            margin-top: auto;
+        }
+        .btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .container {
+            margin-top: 30px;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Encabezado -->
+    <header class="bg-dark text-white py-3">
+        <div class="container text-center">
+            <h1>Asistente Estático</h1>
+            <p>Simulador de servicios financieros</p>
+        </div>
+    </header>
+
+    <!-- Cuerpo principal -->
+    <main class="container mt-4">
+        <div class="col-12 text-center mb-4">
+            <h2>Aviso de este desarrollo</h2>
+            <p>Es un ejemplo de un asistente a la medida con formularios específicos por opción.</p>
+        </div>
+
+        <div class="card p-4 shadow">
+            <h2 class="mb-4 text-primary">Selecciona un servicio que desea acceder</h2>
+            <form id="chatbot-form" autocomplete="off">
+                <div class="mb-3">
+                    <label for="option" class="form-label">Elige una opción:</label>
+                    <select name="option" id="option" class="form-select" onchange="mostrarCampos()">
+                        <option value="">Seleccionar opción</option>
+                        <option value="1">Consultar Saldo</option>
+                        <option value="2">Calcular Préstamo</option>
+                        <option value="3">Generar Reporte</option>
+                    </select>
+                </div>
+                <div id="extra-fields" class="mb-3"></div>
+                <div class="d-flex justify-content-between gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">Procesar</button>
+                    <a href="/" class="btn btn-secondary flex-fill">Volver al inicio</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Modal de resultado -->
+    <div class="modal fade" id="resultadoModal" tabindex="-1" aria-labelledby="resultadoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resultadoModalLabel">Resultado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" id="modalMessage">
+                    <!-- Mensaje del chatbot -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pie de página -->
+    <footer class="bg-light text-center py-3 mt-auto">
+        <div class="container">
+            <p class="mb-0">&copy; 2024 Desarrollos CCB. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function mostrarCampos() {
+            const option = document.getElementById("option").value;
+            let fields = '';
+            if (option == "1") {
+                fields = `<label for="cuenta" class="form-label">Ingresa el número de cuenta registrada en la base de datos:</label>
+                          <input type="text" name="cuenta" class="form-control" required>`;
+            } else if (option == "2") {
+                fields = `<label for="monto" class="form-label">Ingresar monto del Préstamo:</label>
+                          <input type="number" name="monto" step="0.01" class="form-control" required>
+                          <label for="plazo" class="form-label mt-2">Especificar el número de plazos en meses:</label>
+                          <input type="number" name="plazo" class="form-control" required>`;
+            } else if (option == "3") {
+                fields = `<label for="periodo" class="form-label">Ingresar su nombre para generar certificado:</label>
+                          <input type="text" name="periodo" class="form-control" required>`;
+            }
+            document.getElementById("extra-fields").innerHTML = fields;
+        }
+
+        $("#chatbot-form").submit(function(event) {
+            event.preventDefault();
+            $.ajax({
+                url: "/procesar",
+                type: "POST",
+                data: $(this).serialize(),
+                success: function(response) {
+                    $("#modalMessage").html(response.message);
+                    if (response.message.includes("Reporte generado")) {
+                        $("#modalMessage").append(
+                            `<br><a href="/generar_reporte_pdf?periodo=${$("input[name='periodo']").val()}" 
+                            class="btn btn-success mt-2">Descargar archivo PDF</a>`
+                        );
+                    }
+                    var resultadoModal = new bootstrap.Modal(document.getElementById("resultadoModal"));
+                    resultadoModal.show();
+                },
+                error: function() {
+                    $("#modalMessage").text("Hubo un error al procesar la solicitud.");
+                    var resultadoModal = new bootstrap.Modal(document.getElementById("resultadoModal"));
+                    resultadoModal.show();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

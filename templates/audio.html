@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es"> 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente con Audio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background-color: #0d6efd;
+            color: white;
+            padding: 15px 0;
+        }
+        header h1 {
+            margin: 0;
+        }
+        footer {
+            background-color: #0d6efd;
+            color: black;
+            text-align: center;
+            padding: 10px 0;
+            margin-top: auto;
+        }
+        .btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .container {
+            margin-top: 30px;
+        }
+
+        #chat-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .chat-bubble {
+            background: #e9ecef;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        .chat-bubble p {
+            margin: 0;
+        }
+        .audio-preview {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Encabezado -->
+    <header class="bg-dark text-white py-3">
+        <div class="container text-center">
+            <h1>Asistente con Audio</h1>
+            <p>Interactúa con nuestro asistente virtual mediante voz</p>
+        </div>
+    </header>
+
+    <!-- Cuerpo Principal -->
+    <main class="container my-4">
+
+        <div class="col-12 text-center mb-4">
+            <h2>Aviso de este desarrollo</h2>
+            <p>Es un ejemplo de un asistente que se emplea audio (ideal para ambientes móviles).</p>
+        </div>
+
+        <div id="chat-container">
+            <p>Aquí empieza a visualizar la sesión</p>
+            <!-- Contenedor para las interacciones del chatbot -->
+        </div>
+
+        <form id="audioForm" method="POST" enctype="multipart/form-data" class="mt-4">
+            <div class="mb-3">
+                <label for="audio" class="form-label">Sube un archivo de audio de consulta, (Formato m4a y peso máximo 16 MB):</label>
+                <input type="file" id="audio" name="audio" accept="audio/m4a" class="form-control" required>
+            </div>
+
+            <div id="audio-preview" class="audio-preview">
+                <p>Previsualización del audio:</p>
+                <audio controls id="preview-player">
+                    <source id="preview-source" src="" type="audio/mpeg">
+                    Tu navegador no soporta la reproducción de audio.
+                </audio>
+            </div>
+            
+            <button type="submit" class="btn btn-primary mt-3">Cargar audio</button>
+        </form>
+
+        <!-- Botón para cerrar el chat -->
+        <form action="/cerrar" method="POST" class="mt-4 text-center">
+            <button type="submit" class="btn btn-danger w-100">Cerrar Sesión</button>
+        </form>
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="bg-light text-center py-3 mt-auto">
+        <div class="container">
+            <p class="mb-0">&copy; 2024 Desarrollos CCB. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mostrar previsualización del audio seleccionado
+        const audioInput = document.getElementById('audio');
+        const previewDiv = document.getElementById('audio-preview');
+        const previewSource = document.getElementById('preview-source');
+        const previewPlayer = document.getElementById('preview-player');
+
+        audioInput.addEventListener('change', function () {
+            const file = audioInput.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                previewSource.src = url;
+                previewPlayer.load();
+                previewDiv.style.display = 'block';
+            } else {
+                previewDiv.style.display = 'none';
+            }
+        });
+
+        // Enviar el formulario y cargar las respuestas de forma secuencial
+        const audioForm = document.getElementById('audioForm');
+        const chatContainer = document.getElementById('chat-container');
+
+        audioForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            
+            const formData = new FormData(audioForm);
+            const response = await fetch('/audio', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+
+            // Mostrar la respuesta en el chat
+            const chatBubble = document.createElement('div');
+            chatBubble.classList.add('chat-bubble');
+            chatBubble.innerHTML = `
+                <p><strong>Tu pregunta:</strong> ${data.texto_usuario}</p>
+                <p><strong>Respuesta:</strong> ${data.respuesta_texto}</p>
+                <audio controls>
+                    <source src="${data.respuesta_audio}" type="audio/mpeg">
+                    Tu navegador no soporta la reproducción de audio.
+                </audio>
+                <hr>
+            `;
+            chatContainer.appendChild(chatBubble);
+
+            // Resetear el formulario para permitir otro envío
+            audioForm.reset();
+            previewDiv.style.display = 'none';
+        });
+    </script>
+
+</body>
+</html>
+

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es"> 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Dinámico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background-color: #0d6efd;
+            color: white;
+            padding: 15px 0;
+        }
+        header h1 {
+            margin: 0;
+        }
+        footer {
+            background-color: #0d6efd;
+            color: black;
+            text-align: center;
+            padding: 10px 0;
+            margin-top: auto;
+        }
+        .btn {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .container {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Encabezado -->
+    <header class="bg-dark text-white py-3">
+        <div class="container text-center">
+            <h1>Asistente Dinámico</h1>
+            <p>Interactúa con nuestro asistente virtual</p>
+        </div>
+    </header>
+
+    <!-- Cuerpo Principal -->
+    <main class="container my-4">
+
+        <div class="col-12 text-center mb-4">
+            <h2>Aviso de este desarrollo</h2>
+            <p>Es un ejemplo de un asistente con respuestas predeterminadas (en la base de datos) de acuerdo a la consulta mediante formulario anexo.</p>
+        </div>
+
+        <div class="chatbox">
+            <h2 class="text-primary text-center">Asistente Virtual</h2>
+            <div id="respuesta" class="mb-3"></div>
+            <form id="chatForm" class="text-center" autocomplete="off">
+                <div class="mb-3">
+                    <label for="mensaje" class="form-label">Escribe tu pregunta:</label>
+                    <input type="text" id="mensaje" class="form-control" placeholder="Ejemplo. Necesito más información de cierto servicio" required>
+                </div>
+                <div class="d-flex justify-content-between gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">Enviar consulta</button>
+                    <a href="/" class="btn btn-secondary flex-fill">Volver al inicio</a>
+                </div>
+            </form>
+            <div id="opciones" style="display: none;" class="mt-4 text-center">
+                <div class="d-flex justify-content-between gap-2">
+                    <button id="otraPregunta" class="btn btn-outline-secondary me-2  flex-fill">¿Hacer otra pregunta?</button>
+                    <button id="cerrar" class="btn btn-danger flex-fill">Finalizar sesión</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="bg-light text-center py-3 mt-auto">
+        <div class="container">
+            <p class="mb-0">&copy; 2024 Desarrollos CCB. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let respuestas = {};
+
+        // Cargar las respuestas desde la API
+        async function cargarRespuestas() {
+            try {
+                const response = await fetch('/api/respuestas');
+                respuestas = await response.json();
+            } catch (error) {
+                console.error("Error al cargar las respuestas:", error);
+            }
+        }
+
+        // Analizar el mensaje del usuario y buscar una respuesta
+        function buscarRespuesta(mensaje) {
+            for (let claves in respuestas) {
+                const palabrasClave = claves.split(","); // Separar palabras clave por comas
+                if (palabrasClave.some(palabra => mensaje.includes(palabra.trim().toLowerCase()))) {
+                    return respuestas[claves];
+                }
+            }
+            return "Lo siento, no tengo una respuesta para eso. ¿Puedes reformular la pregunta?";
+        }
+
+        // Manejar la lógica del chatbot
+        const form = document.getElementById("chatForm");
+        const respuestaDiv = document.getElementById("respuesta");
+        const opcionesDiv = document.getElementById("opciones");
+
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            const mensaje = document.getElementById("mensaje").value.toLowerCase();
+            const respuesta = buscarRespuesta(mensaje);
+
+            // Añadir nueva respuesta sin borrar las anteriores
+            respuestaDiv.innerHTML += `
+                <div class="respuesta">
+                    <p><strong>Tu pregunta:</strong> ${mensaje}</p>
+                    <p><strong>Respuesta:</strong> ${respuesta}</p>
+                </div>
+            `;
+
+            form.style.display = "none";
+            opcionesDiv.style.display = "block";
+        });
+
+        // Manejar opciones adicionales
+        document.getElementById("otraPregunta").addEventListener("click", function () {
+            document.getElementById("mensaje").value = "";
+            form.style.display = "block";
+            opcionesDiv.style.display = "none";
+        });
+
+        document.getElementById("cerrar").addEventListener("click", function () {
+            // Limpiar el contenido de las respuestas cuando se cierra
+            respuestaDiv.innerHTML = '<h1>Muchas gracias por usar nuestro asistente dinámico. ¡Hasta pronto!</h1><br><a href="/" class="btn btn-secondary flex-fill">Volver al inicio</a>';
+            // Ocultar el div de opciones
+            opcionesDiv.style.display = "none";
+        });
+
+        // Cargar respuestas al iniciar
+        cargarRespuestas();
+    </script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8"> 
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Asistente Técnico de Programación</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+        <style>
+            #respuesta {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                max-height: 400px;
+                overflow-y: auto;
+            }
+            body {
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+            }
+            header {
+                background-color: #0d6efd;
+                color: white;
+                padding: 15px 0;
+            }
+            header h1 {
+                margin: 0;
+            }
+            footer {
+                background-color: #0d6efd;
+                color: white;
+                text-align: center;
+                padding: 10px 0;
+                margin-top: auto;
+            }
+         
+        </style>
+    </head>
+<body>
+    <!-- Encabezado -->
+    <header class="text-center">
+        <div class="container">
+            <h1>Asistente Técnico de Programación</h1>
+            <p>Consulta y resuelve tus dudas técnicas</p>
+        </div>
+    </header>    
+
+    <!-- Contenido principal -->
+    <div class="container mt-5">
+        <!-- Formulario -->
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <h2 class="card-title text-center">Realiza tu consulta técnica</h2>
+                <form method="POST" id="formulario" autocomplete="off">
+                    <div class="mb-3">
+                        <label for="pregunta" class="form-label">Pregunta todo relacionado con programación o base de datos (puedes también especificar errores técnicos):</label>
+                        <textarea class="form-control" id="pregunta" name="pregunta" rows="8" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="lenguajes" class="form-label">Indicar lenguajes programación que desea especificar separados por coma (es opcional) si es un error no es necesario diligenciar este campo:</label>
+                        <input type="text" class="form-control" id="lenguajes" name="lenguajes">
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button type="submit" class="btn btn-primary">Enviar</button>
+                            <button type="reset"  class="btn btn-secondary">Borrar</button>
+                        </div>
+                        <div>
+                            <a href="/" class="btn btn-secondary">Volver al inicio</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Respuesta del Asistente -->
+        <div id="respuesta-container" class="card shadow mb-4">
+            {% if respuesta %}
+            <div class="card-body">
+                <h3 id="titulo-respuesta" class="text-center">Respuesta del Asistente</h3>
+                <pre id="respuesta" class="bg-light p-3 border rounded">{{ respuesta }}</pre>
+                <form id="guardar-form" action="/guardar" method="POST">
+                    <input type="hidden" name="pregunta_hidden" id="pregunta_hidden" value="{{ request.form['pregunta'] }}">
+                    <input type="hidden" name="lenguajes_hidden" id="lenguajes_hidden" value="{{ request.form['lenguajes'] }}">
+                    <input type="hidden" name="respuesta_hidden" id="respuesta_hidden" value="{{ respuesta }}">
+                    <div class="text-center mt-3">
+                        <button type="button" class="btn btn-success" id="guardar-btn">Guardar</button>
+                        <a href="{{ url_for('asistente') }}" class="btn btn-primary">Volver a preguntar</a>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Historial de Consultas -->
+        <div class="card shadow">
+            <div class="card-body">
+                <h2 class="text-center mb-4">Historial de Consultas</h2>
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Consulta</th>
+                            <th>Lenguaje</th>
+                            <th>Respuesta</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if consultas %}
+                        {% for consulta in consultas %}
+                        <tr>
+                            <td>{{ consulta.consulta }}</td>
+                            <td>{{ consulta.lenguaje }}</td>
+                            <td><pre style="white-space: pre-wrap; word-wrap: break-word;">{{ consulta.respuesta }}</pre></td>
+                            <td>
+                                <a href="#" class="btn btn-danger btn-sm borrar-btn" data-id="{{ consulta.id }}" data-bs-toggle="modal" data-bs-target="#deleteModal">Borrar</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center">{{ mensaje }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pie de página -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Desarrollos CCB. Todos los derechos reservados.</p>
+        </div>
+    </footer>        
+
+        <!-- Modal de confirmación -->
+        <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmModalLabel">Confirmación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Deseas guardar los datos en la base de datos?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success" id="confirmGuardar">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de éxito -->
+        <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        El proceso se ha efectuado exitosamente.
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+
+    <!-- Modal de confirmación de eliminación -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Estás seguro de que deseas eliminar este registro?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form id="delete-form" action="" method="POST">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+    <!-- Modal de Procesando -->
+    <div class="modal fade" id="procesandoModal" tabindex="-1" aria-labelledby="procesandoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center">
+                <div class="modal-body">
+                    <h5 id="procesandoModalLabel">Procesando...</h5>
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const guardarBtn = document.getElementById('guardar-btn');
+        const confirmGuardarBtn = document.getElementById('confirmGuardar');
+
+        guardarBtn?.addEventListener('click', () => {
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            confirmModal.show();
+        });
+
+        confirmGuardarBtn?.addEventListener('click', () => {
+            document.getElementById('guardar-form').submit();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+        const formulario = document.getElementById('formulario');
+        const procesandoModal = new bootstrap.Modal(document.getElementById('procesandoModal'));
+
+            formulario.addEventListener('submit', (event) => {
+                procesandoModal.show(); // Muestra el modal de "Procesando"
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+        const guardarForm = document.getElementById('guardar-form');
+        const respuestaPre = document.getElementById('respuesta'); // Etiqueta <pre>
+        const respuestaHidden = document.getElementById('respuesta_hidden');
+
+            guardarForm.addEventListener('submit', (event) => {
+                // Asegurarte de que el contenido de <pre> se guarda con tabulaciones y saltos de línea
+                if (respuestaPre && respuestaHidden) {
+                    respuestaHidden.value = respuestaPre.textContent.trim(); // Extrae el texto completo tal como se muestra
+                }
+            });
+        });     
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success') === 'true') {
+                successModal.show();
+                // Esperar 5 segundos antes de redirigir
+                setTimeout(() => {
+                    window.location = "{{ url_for('asistente') }}";
+                }, 5000); // 5000 ms = 5 segundos
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        const deleteForm = document.getElementById('delete-form');
+
+        document.querySelectorAll('.borrar-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const recordId = button.getAttribute('data-id');
+                    deleteForm.action = `/eliminar/${recordId}`;
+                });
+            });
+        });        
+
+    </script>
+</body>
+</html>
